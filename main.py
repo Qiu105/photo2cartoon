@@ -39,7 +39,7 @@ def parse_args():
     parser.add_argument('--pretrained_weights', type=str, default='', help='pretrained weight path')
 
     args = parser.parse_args()
-    args.result_dir = './experiment/{}-size{}-ch{}-{}-lr{}-adv{}-cyc{}-id{}-identity{}-cam{}'.format(
+    args.result_dir = '/content/drive/experiment/{}-size{}-ch{}-{}-lr{}-adv{}-cyc{}-id{}-identity{}-cam{}'.format(
         os.path.basename(__file__)[:-3],
         args.img_size,
         args.ch,
