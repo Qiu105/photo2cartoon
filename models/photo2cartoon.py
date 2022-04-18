@@ -450,7 +450,7 @@ class Photo2Cartoon(object):
             params['disGB'] = self.disGB.state_dict()
             params['disLA'] = self.disLA.state_dict()
             params['disLB'] = self.disLB.state_dict()
-        torch.save(params, os.path.join(dir, self.dataset + '_params_%07d.pt' % step))
+        torch.save(params, os.path.join(dir, self.dataset + '_params_%07d.pt' % step),_use_new_zipfile_serialization=False)
 
     def load(self, dir, step):
         params = torch.load(os.path.join(dir, self.dataset + '_params_%07d.pt' % step))
