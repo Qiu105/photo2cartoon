@@ -5,9 +5,8 @@ from torch.nn.parameter import Parameter
 
 
 class ResnetGenerator(nn.Module):
-    def __init__(self, ngf=64, img_size=256, light=False):
+    def __init__(self, ngf=64, img_size=256):
         super(ResnetGenerator, self).__init__()
-        self.light = light
 
         self.ConvBlock1 = nn.Sequential(nn.ReflectionPad2d(3),
                                        nn.Conv2d(3, ngf, kernel_size=7, stride=1, padding=0, bias=False),
@@ -34,23 +33,19 @@ class ResnetGenerator(nn.Module):
         self.EncodeBlock3 = ResnetBlock(ngf*4)
         self.EncodeBlock4 = ResnetBlock(ngf*4)
 
-        # Class Activation Map
+        # Class Activation Map(CAM)
         self.gap_fc = nn.Linear(ngf*4, 1)
         self.gmp_fc = nn.Linear(ngf*4, 1)
         self.conv1x1 = nn.Conv2d(ngf*8, ngf*4, kernel_size=1, stride=1)
         self.relu = nn.ReLU(True)
 
         # Gamma, Beta block
-        if self.light:
-            self.FC = nn.Sequential(nn.Linear(ngf*4, ngf*4),
-                                    nn.ReLU(True),
-                                    nn.Linear(ngf*4, ngf*4),
-                                    nn.ReLU(True))
-        else:
-            self.FC = nn.Sequential(nn.Linear(img_size//4*img_size//4*ngf*4, ngf*4),
-                                    nn.ReLU(True),
-                                    nn.Linear(ngf*4, ngf*4),
-                                    nn.ReLU(True))
+
+        self.FC = nn.Sequential(nn.Linear(ngf*4, ngf*4),
+                                nn.ReLU(True),
+                                nn.Linear(ngf*4, ngf*4),
+                                nn.ReLU(True))
+
 
         # Decoder Bottleneck
         self.DecodeBlock1 = ResnetSoftAdaLINBlock(ngf*4)
@@ -111,11 +106,9 @@ class ResnetGenerator(nn.Module):
 
         heatmap = torch.sum(x, dim=1, keepdim=True)
 
-        if self.light:
-            x_ = F.adaptive_avg_pool2d(x, 1)
-            style_features = self.FC(x_.view(x_.shape[0], -1))
-        else:
-            style_features = self.FC(x.view(x.shape[0], -1))
+
+        x_ = F.adaptive_avg_pool2d(x, 1)
+        style_features = self.FC(x_.view(x_.shape[0], -1))
 
         x = self.DecodeBlock1(x, content_features4, style_features)
         x = self.DecodeBlock2(x, content_features3, style_features)
@@ -399,7 +392,7 @@ class Discriminator(nn.Module):
     def __init__(self, input_nc, ndf=64, n_layers=5):
         super(Discriminator, self).__init__()
         model = [nn.ReflectionPad2d(1),
-                 nn.utils.spectral_norm(
+                 nn.utils.spectral_norm(    # 频谱归一化通过用频谱规范重新调整权重张量来稳定生成式对抗网络(GANs)中的判别器(批判器)的训练
                  nn.Conv2d(input_nc, ndf, kernel_size=4, stride=2, padding=0, bias=True)),
                  nn.LeakyReLU(0.2, True)]
 
@@ -456,30 +449,30 @@ class Discriminator(nn.Module):
 
 class RhoClipper(object):
     def __init__(self, min, max):
-        self.clip_min = min
-        self.clip_max = max
+        self.min = min
+        self.max = max
         assert min < max
 
     def __call__(self, module):
         if hasattr(module, 'rho'):
-            w = module.rho.data
-            w = w.clamp(self.clip_min, self.clip_max)
-            module.rho.data = w
+            rho = module.rho.data
+            rho = rho.clamp(self.min, self.max)
+            module.rho.data = rho
 
 
 class WClipper(object):
     def __init__(self, min, max):
-        self.clip_min = min
-        self.clip_max = max
+        self.min = min
+        self.max = max
         assert min < max
 
     def __call__(self, module):
         if hasattr(module, 'w_gamma'):
-            w = module.w_gamma.data
-            w = w.clamp(self.clip_min, self.clip_max)
-            module.w_gamma.data = w
+            w_gamma = module.w_gamma.data
+            w_gamma = w_gamma.clamp(self.min, self.max)
+            module.w_gamma.data = w_gamma
 
         if hasattr(module, 'w_beta'):
-            w = module.w_beta.data
-            w = w.clamp(self.clip_min, self.clip_max)
-            module.w_beta.data = w
+            w_beta = module.w_beta.data
+            w_beta = w_beta.clamp(self.min, self.max)
+            module.w_beta.data = w_beta
