@@ -270,8 +270,8 @@ class Photo2Cartoon(object):
                 if step % self.print_freq == 0:
                     train_sample_num = 5
                     test_sample_num = 5
-                    A2B = np.zeros((self.img_size * 7, 0, 3))
-                    B2A = np.zeros((self.img_size * 7, 0, 3))
+                    A2B = np.zeros((self.img_size * 3, 0, 3))
+                    B2A = np.zeros((self.img_size * 3, 0, 3))
 
                     self.genA2B.eval(), self.genB2A.eval(), self.disGA.eval(), self.disGB.eval(), self.disLA.eval(), self.disLB.eval()
                     with torch.no_grad():
