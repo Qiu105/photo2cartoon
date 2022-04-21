@@ -135,9 +135,9 @@ class Photo2Cartoon(object):
         print('training start !')
         start_time = time.time()
         for epoch in range(1, self.epoch+1):
-	    print(epoch)
+            print(epoch)
             for step in range(start_iter, self.iteration + 1):
-		print(step)
+                print(step)
                 if self.decay_flag and step > (self.iteration // 2):
                     self.G_optim.param_groups[0]['lr'] -= (self.lr / (self.iteration // 2))
                     self.D_optim.param_groups[0]['lr'] -= (self.lr / (self.iteration // 2))
