@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument('--lr', type=float, default=0.0001, help='The learning rate')
     parser.add_argument('--device', type=str, default='cpu', help='Set gpu mode: [cpu, cuda]')
     args = parser.parse_args()
-    args.result_dir = './ex'
+    args.result_dir = './experiment'
 
     return check_args(args)
 
