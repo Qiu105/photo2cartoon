@@ -8,6 +8,7 @@ from utils import *
 from glob import glob
 from models.face_features import FaceFeatures
 from torchsummary import summary
+import matplotlib.pyplot as plt
 
 
 class Photo2Cartoon(object):
@@ -135,6 +136,8 @@ class Photo2Cartoon(object):
         print('training start !')
         start_time = time.time()
         for epoch in range(1, self.epoch+1):
+            G_losses = []
+            D_losses = []
             for step in range(start_iter, self.iteration + 1):
                 if self.decay_flag and step > (self.iteration // 2):
                     self.G_optim.param_groups[0]['lr'] -= (self.lr / (self.iteration // 2))
@@ -353,6 +356,19 @@ class Photo2Cartoon(object):
                     params['disLA'] = self.disLA.state_dict()
                     params['disLB'] = self.disLB.state_dict()
                     torch.save(params, os.path.join(self.result_dir, self.dataset + '_params_latest.pt'), _use_new_zipfile_serialization=False)
+
+                G_losses.append(Generator_loss.item())
+                D_losses.append(Discriminator_loss.item())
+
+            plt.figure(figsize=(10, 5))
+            plt.title("Generator and Discriminator Loss During Training")
+            plt.plot(G_losses, label="G")
+            plt.plot(D_losses, label="D")
+            plt.xlabel("iterations")
+            plt.ylabel("Loss")
+            plt.legend()
+            plt.show()
+            plt.savefig(os.path.join(self.result_dir, self.dataset, 'loss', 'epoch_{}.jpg'.format(epoch)))
 
     def test(self):
         model_list = glob(os.path.join(self.result_dir, self.dataset, 'model', '*.pt'))
