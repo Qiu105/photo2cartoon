@@ -9,6 +9,7 @@ from glob import glob
 from models.face_features import FaceFeatures
 from torchsummary import summary
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class Photo2Cartoon(object):
@@ -53,7 +54,7 @@ class Photo2Cartoon(object):
         print("# batch_size : ", self.batch_size)
         print("# iteration per epoch : ", self.iteration)
 
-    def save(self, dir, step):
+    def save(self, dir, epoch):
         params = {}
         params['genA2B'] = self.genA2B.state_dict()
         params['genB2A'] = self.genB2A.state_dict()
@@ -61,10 +62,10 @@ class Photo2Cartoon(object):
         params['disGB'] = self.disGB.state_dict()
         params['disLA'] = self.disLA.state_dict()
         params['disLB'] = self.disLB.state_dict()
-        torch.save(params, os.path.join(dir, self.dataset + '_params_%07d.pt' % step), _use_new_zipfile_serialization=False)
+        torch.save(params, os.path.join(dir, self.dataset + '_params_%04d.pt' % epoch), _use_new_zipfile_serialization=False)
 
-    def load(self, dir, step):
-        params = torch.load(os.path.join(dir, self.dataset + '_params_%07d.pt' % step))
+    def load(self, dir, epoch):
+        params = torch.load(os.path.join(dir, self.dataset + '_params_%04d.pt' % epoch))
         self.genA2B.load_state_dict(params['genA2B'])
         self.genB2A.load_state_dict(params['genB2A'])
         self.disGA.load_state_dict(params['disGA'])
@@ -135,9 +136,9 @@ class Photo2Cartoon(object):
         # training loop
         print('training start !')
         start_time = time.time()
+        G_losses = []
+        D_losses = []
         for epoch in range(1, self.epoch+1):
-            G_losses = []
-            D_losses = []
             for step in range(start_iter, self.iteration + 1):
                 if self.decay_flag and step > (self.iteration // 2):
                     self.G_optim.param_groups[0]['lr'] -= (self.lr / (self.iteration // 2))
@@ -340,8 +341,8 @@ class Photo2Cartoon(object):
                                                                        RGB2BGR(tensor2numpy(denorm(fake_B2A[0]))),
                                                                        RGB2BGR(tensor2numpy(denorm(fake_B2A2B[0])))), 0)), 1)
 
-                    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'img', 'A2B_%07d.png' % step), A2B * 255.0)
-                    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'img', 'B2A_%07d.png' % step), B2A * 255.0)
+                    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'img', 'A2B_%04d.png' % epoch), A2B * 255.0)
+                    cv2.imwrite(os.path.join(self.result_dir, self.dataset, 'img', 'B2A_%04d.png' % epoch), B2A * 255.0)
                     self.genA2B.train(), self.genB2A.train(), self.disGA.train(), self.disGB.train(), self.disLA.train(), self.disLB.train()
 
                 if step % self.save_freq == 0:
@@ -359,7 +360,10 @@ class Photo2Cartoon(object):
 
                 G_losses.append(Generator_loss.item())
                 D_losses.append(Discriminator_loss.item())
-
+            g = np.array(G_losses)
+            d = np.array(D_losses)
+            np.save('g_loss.npy', g)
+            np.save('d_loss.npy', d)
             plt.figure(figsize=(10, 5))
             plt.title("Generator and Discriminator Loss During Training")
             plt.plot(G_losses, label="G")
