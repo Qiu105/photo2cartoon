@@ -23,6 +23,7 @@ def check_args(args):
     check_folder(os.path.join(args.result_dir, args.dataset, 'model'))
     check_folder(os.path.join(args.result_dir, args.dataset, 'img'))
     check_folder(os.path.join(args.result_dir, args.dataset, 'test'))
+    check_folder(os.path.join(args.result_dir, args.dataset, 'loss'))
     shutil.copy(__file__, args.result_dir)
     return args
     
