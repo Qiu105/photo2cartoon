@@ -346,7 +346,7 @@ class Photo2Cartoon(object):
                     self.genA2B.train(), self.genB2A.train(), self.disGA.train(), self.disGB.train(), self.disLA.train(), self.disLB.train()
 
                 if step % self.save_freq == 0:
-                    self.save(os.path.join(self.result_dir, self.dataset, 'model'), step)
+                    self.save(os.path.join(self.result_dir, self.dataset, 'model'), epoch)
 
                 if step % 1000 == 0:
                     params = {}
